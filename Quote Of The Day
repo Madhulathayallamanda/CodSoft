@@ -1,0 +1,117 @@
+import { useState, useEffect } from 'react'
+import { Button } from "/components/ui/button"
+import { Share2, Heart, RefreshCw } from "lucide-react"
+import { Checkbox } from "/components/ui/checkbox"
+import { Label } from "/components/ui/label"
+
+interface Quote {
+  id: number
+  text: string
+  author: string
+}
+
+const initialQuotes: Quote[] = [
+  { id: 1, text: "The greatest glory in living lies not in never falling, but in rising every time we fall.", author: "Nelson Mandela" },
+  { id: 2, text: "The way to get started is to quit talking and begin doing.", author: "Walt Disney" },
+  { id: 3, text: "Your time is limited, so don't waste it living someone else's life.", author: "Steve Jobs" },
+  { id: 4, text: "If life were predictable it would cease to be life, and be without flavor.", author: "Eleanor Roosevelt" },
+  { id: 5, text: "If you look at what you have in life, you'll always have more.", author: "Oprah Winfrey" },
+]
+
+export default function QuoteOfTheDay() {
+  const [currentQuote, setCurrentQuote] = useState<Quote>(initialQuotes[0])
+  const [favoriteQuotes, setFavoriteQuotes] = useState<Quote[]>([])
+  const [isFavorite, setIsFavorite] = useState(false)
+
+  useEffect(() => {
+    const storedFavorites = localStorage.getItem('favoriteQuotes')
+    if (storedFavorites) {
+      setFavoriteQuotes(JSON.parse(storedFavorites))
+      setIsFavorite(favoriteQuotes.some(fav => fav.id === currentQuote.id))
+    }
+  }, [currentQuote])
+
+  useEffect(() => {
+    localStorage.setItem('favoriteQuotes', JSON.stringify(favoriteQuotes))
+  }, [favoriteQuotes])
+
+  const refreshQuote = () => {
+    const randomIndex = Math.floor(Math.random() * initialQuotes.length)
+    setCurrentQuote(initialQuotes[randomIndex])
+  }
+
+  const toggleFavorite = () => {
+    if (isFavorite) {
+      setFavoriteQuotes(favoriteQuotes.filter(fav => fav.id !== currentQuote.id))
+    } else {
+      setFavoriteQuotes([...favoriteQuotes, currentQuote])
+    }
+    setIsFavorite(!isFavorite)
+  }
+
+  const shareQuote = () => {
+    const quoteText = `${currentQuote.text} - ${currentQuote.author}`
+    if (navigator.share) {
+      navigator.share({
+        title: "Quote of the Day",
+        text: quoteText,
+      })
+    } else {
+      alert(`Share this quote:\n\n${quoteText}`)
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold">Quote of the Day</h1>
+      </header>
+      <main className="w-full max-w-md text-center">
+        <div className="p-4 border rounded bg-gray-100 mb-4">
+          <p className="text-xl font-semibold mb-2">{currentQuote.text}</p>
+          <p className="text-gray-500">- {currentQuote.author}</p>
+        </div>
+        <div className="flex justify-center space-x-4 mb-4">
+          <Button onClick={refreshQuote} variant="outline">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+          <Button onClick={shareQuote} variant="outline">
+            <Share2 className="w-4 h-4 mr-2" />
+            Share
+          </Button>
+          <Button onClick={toggleFavorite} variant="outline">
+            <Heart className={`w-4 h-4 mr-2 ${isFavorite ? 'text-red-500' : ''}`} />
+            {isFavorite ? "Unfavorite" : "Favorite"}
+          </Button>
+        </div>
+        <div className="w-full">
+          <h2 className="text-xl font-bold mb-2">Favorite Quotes</h2>
+          {favoriteQuotes.length === 0 ? (
+            <p className="text-gray-500">No favorite quotes yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {favoriteQuotes.map(favQuote => (
+                <div key={favQuote.id} className="flex items-center justify-between p-2 border rounded bg-gray-100">
+                  <div className="flex items-center">
+                    <Checkbox
+                      id={`fav-quote-${favQuote.id}`}
+                      checked={true}
+                      onCheckedChange={() => {}}
+                    />
+                    <Label htmlFor={`fav-quote-${favQuote.id}`} className="ml-2">
+                      {favQuote.text} - {favQuote.author}
+                    </Label>
+                  </div>
+                  <Button variant="destructive" onClick={() => setFavoriteQuotes(favoriteQuotes.filter(fav => fav.id !== favQuote.id))}>
+                    <Trash className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  )
+}
