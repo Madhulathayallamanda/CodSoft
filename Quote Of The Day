@@ -1,117 +1,87 @@
 import { useState, useEffect } from 'react'
 import { Button } from "/components/ui/button"
-import { Share2, Heart, RefreshCw } from "lucide-react"
-import { Checkbox } from "/components/ui/checkbox"
-import { Label } from "/components/ui/label"
+import { Card, CardContent, CardHeader, CardTitle } from "/components/ui/card"
+import { Heart, ArrowRight, X } from "lucide-react"
 
-interface Quote {
-  id: number
-  text: string
-  author: string
-}
-
-const initialQuotes: Quote[] = [
-  { id: 1, text: "The greatest glory in living lies not in never falling, but in rising every time we fall.", author: "Nelson Mandela" },
-  { id: 2, text: "The way to get started is to quit talking and begin doing.", author: "Walt Disney" },
-  { id: 3, text: "Your time is limited, so don't waste it living someone else's life.", author: "Steve Jobs" },
-  { id: 4, text: "If life were predictable it would cease to be life, and be without flavor.", author: "Eleanor Roosevelt" },
-  { id: 5, text: "If you look at what you have in life, you'll always have more.", author: "Oprah Winfrey" },
+const quotes = [
+  "The greatest glory in living lies not in never falling, but in rising every time we fall. - Nelson Mandela",
+  "The way to get started is to quit talking and begin doing. - Walt Disney",
+  "Your time is limited, so don't waste it living someone else's life. - Steve Jobs",
+  "If life were predictable it would cease to be life, and be without flavor. - Eleanor Roosevelt",
+  "If you look at what you have in life, you'll always have more. - Oprah Winfrey",
+  "Life is what happens when you're busy making other plans. - John Lennon",
+  "Spread love everywhere you go. Let no one ever come to you without leaving happier. - Mother Teresa",
+  "When you reach the end of your rope, tie a knot in it and hang on. - Franklin D. Roosevelt",
+  "Always remember that you are absolutely unique. Just like everyone else. - Margaret Mead",
+  "The future belongs to those who believe in the beauty of their dreams. - Eleanor Roosevelt"
 ]
 
 export default function QuoteOfTheDay() {
-  const [currentQuote, setCurrentQuote] = useState<Quote>(initialQuotes[0])
-  const [favoriteQuotes, setFavoriteQuotes] = useState<Quote[]>([])
-  const [isFavorite, setIsFavorite] = useState(false)
+  const [currentQuote, setCurrentQuote] = useState<string>(quotes[Math.floor(Math.random() * quotes.length)])
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    const savedFavorites = localStorage.getItem('favorites')
+    return savedFavorites ? JSON.parse(savedFavorites) : []
+  })
 
   useEffect(() => {
-    const storedFavorites = localStorage.getItem('favoriteQuotes')
-    if (storedFavorites) {
-      setFavoriteQuotes(JSON.parse(storedFavorites))
-      setIsFavorite(favoriteQuotes.some(fav => fav.id === currentQuote.id))
-    }
-  }, [currentQuote])
+    localStorage.setItem('favorites', JSON.stringify(favorites))
+  }, [favorites])
 
-  useEffect(() => {
-    localStorage.setItem('favoriteQuotes', JSON.stringify(favoriteQuotes))
-  }, [favoriteQuotes])
-
-  const refreshQuote = () => {
-    const randomIndex = Math.floor(Math.random() * initialQuotes.length)
-    setCurrentQuote(initialQuotes[randomIndex])
+  const getRandomQuote = () => {
+    const randomIndex = Math.floor(Math.random() * quotes.length)
+    setCurrentQuote(quotes[randomIndex])
   }
 
-  const toggleFavorite = () => {
-    if (isFavorite) {
-      setFavoriteQuotes(favoriteQuotes.filter(fav => fav.id !== currentQuote.id))
+  const toggleFavorite = (quote: string) => {
+    if (favorites.includes(quote)) {
+      setFavorites(favorites.filter(fav => fav !== quote))
     } else {
-      setFavoriteQuotes([...favoriteQuotes, currentQuote])
+      setFavorites([...favorites, quote])
     }
-    setIsFavorite(!isFavorite)
   }
 
-  const shareQuote = () => {
-    const quoteText = `${currentQuote.text} - ${currentQuote.author}`
-    if (navigator.share) {
-      navigator.share({
-        title: "Quote of the Day",
-        text: quoteText,
-      })
-    } else {
-      alert(`Share this quote:\n\n${quoteText}`)
-    }
-  }
+  const isFavorite = (quote: string) => favorites.includes(quote)
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold">Quote of the Day</h1>
-      </header>
-      <main className="w-full max-w-md text-center">
-        <div className="p-4 border rounded bg-gray-100 mb-4">
-          <p className="text-xl font-semibold mb-2">{currentQuote.text}</p>
-          <p className="text-gray-500">- {currentQuote.author}</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-blue-100 to-white p-4">
+      <Card className="w-full max-w-md bg-white shadow-lg rounded-lg overflow-hidden">
+        <CardHeader className="bg-blue-500 text-white">
+          <CardTitle className="text-2xl font-bold">Quote of the Day</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center p-6">
+          <p className="text-lg mb-4 text-gray-800">{currentQuote}</p>
+          <div className="flex justify-center space-x-4">
+            <Button onClick={getRandomQuote} variant="outline" className="bg-blue-500 text-white hover:bg-blue-600">
+              <ArrowRight className="mr-2 h-4 w-4" /> New Quote
+            </Button>
+            <Button onClick={() => toggleFavorite(currentQuote)} variant={isFavorite(currentQuote) ? 'secondary' : 'outline'} className="bg-green-500 text-white hover:bg-green-600">
+              <Heart className="mr-2 h-4 w-4" /> {isFavorite(currentQuote) ? 'Unfavorite' : 'Favorite'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {favorites.length > 0 && (
+        <div className="mt-8 w-full max-w-md">
+          <Card className="bg-white shadow-lg rounded-lg overflow-hidden">
+            <CardHeader className="bg-blue-500 text-white">
+              <CardTitle className="text-2xl font-bold">Favorite Quotes</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <ul className="space-y-2">
+                {favorites.map((quote, index) => (
+                  <li key={index} className="flex items-center justify-between bg-gray-100 p-2 rounded-lg">
+                    <p className="text-lg text-gray-800">{quote}</p>
+                    <Button onClick={() => toggleFavorite(quote)} variant="destructive" size="icon" className="bg-red-500 hover:bg-red-600">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
         </div>
-        <div className="flex justify-center space-x-4 mb-4">
-          <Button onClick={refreshQuote} variant="outline">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
-          <Button onClick={shareQuote} variant="outline">
-            <Share2 className="w-4 h-4 mr-2" />
-            Share
-          </Button>
-          <Button onClick={toggleFavorite} variant="outline">
-            <Heart className={`w-4 h-4 mr-2 ${isFavorite ? 'text-red-500' : ''}`} />
-            {isFavorite ? "Unfavorite" : "Favorite"}
-          </Button>
-        </div>
-        <div className="w-full">
-          <h2 className="text-xl font-bold mb-2">Favorite Quotes</h2>
-          {favoriteQuotes.length === 0 ? (
-            <p className="text-gray-500">No favorite quotes yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {favoriteQuotes.map(favQuote => (
-                <div key={favQuote.id} className="flex items-center justify-between p-2 border rounded bg-gray-100">
-                  <div className="flex items-center">
-                    <Checkbox
-                      id={`fav-quote-${favQuote.id}`}
-                      checked={true}
-                      onCheckedChange={() => {}}
-                    />
-                    <Label htmlFor={`fav-quote-${favQuote.id}`} className="ml-2">
-                      {favQuote.text} - {favQuote.author}
-                    </Label>
-                  </div>
-                  <Button variant="destructive" onClick={() => setFavoriteQuotes(favoriteQuotes.filter(fav => fav.id !== favQuote.id))}>
-                    <Trash className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
+      )}
     </div>
   )
 }
