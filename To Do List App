@@ -1,46 +1,41 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Button } from "/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "/components/ui/card"
 import { Input } from "/components/ui/input"
-import { Checkbox } from "/components/ui/checkbox"
-import { Trash } from "lucide-react"
+import { Label } from "/components/ui/label"
+import { Trash, Check } from "lucide-react"
 
-type Task = {
-  id: number
-  description: string
-  completed: boolean
-}
+const taskColors = [
+  "bg-pink-100 text-pink-800",
+  "bg-blue-100 text-blue-800",
+  "bg-green-100 text-green-800",
+  "bg-yellow-100 text-yellow-800",
+  "bg-purple-100 text-purple-800",
+  "bg-orange-100 text-orange-800",
+  "bg-cyan-100 text-cyan-800",
+  "bg-teal-100 text-teal-800",
+  "bg-lime-100 text-lime-800",
+  "bg-rose-100 text-rose-800"
+]
 
 export default function TodoList() {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [taskDescription, setTaskDescription] = useState('')
-
-  useEffect(() => {
-    const storedTasks = localStorage.getItem('tasks')
-    if (storedTasks) {
-      setTasks(JSON.parse(storedTasks))
-    }
-  }, [])
-
-  useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks))
-  }, [tasks])
+  const [tasks, setTasks] = useState<{ id: number; text: string; completed: boolean; color: string }[]>([])
+  const [newTask, setNewTask] = useState<string>("")
+  const [nextId, setNextId] = useState<number>(1)
+  const [currentColorIndex, setCurrentColorIndex] = useState<number>(0)
 
   const addTask = () => {
-    if (taskDescription.trim()) {
-      const newTask: Task = {
-        id: Date.now(),
-        description: taskDescription,
-        completed: false,
-      }
-      setTasks([...tasks, newTask])
-      setTaskDescription('')
+    if (newTask.trim()) {
+      const color = taskColors[currentColorIndex]
+      setTasks([...tasks, { id: nextId, text: newTask, completed: false, color }])
+      setNewTask("")
+      setNextId(nextId + 1)
+      setCurrentColorIndex((currentColorIndex + 1) % taskColors.length)
     }
   }
 
   const toggleTaskCompletion = (id: number) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ))
+    setTasks(tasks.map(task => (task.id === id ? { ...task, completed: !task.completed } : task)))
   }
 
   const deleteTask = (id: number) => {
@@ -48,44 +43,55 @@ export default function TodoList() {
   }
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-black p-4 text-white">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-blue-400">To-Do List</h1>
-      </header>
-      <main className="w-full max-w-2xl">
-        <div className="flex items-center mb-4">
-          <Input
-            className="w-full mr-2 bg-gray-800 border-gray-700 text-white focus:border-blue-500 focus:ring-blue-500"
-            placeholder="Add a new task"
-            value={taskDescription}
-            onChange={(e) => setTaskDescription(e.target.value)}
-          />
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={addTask}>Add</Button>
-        </div>
-        <ul className="space-y-2">
-          {tasks.map(task => (
-            <li key={task.id} className="flex items-center justify-between p-2 bg-gray-800 rounded shadow-md">
-              <div className="flex items-center">
-                <Checkbox
-                  id={`task-${task.id}`}
-                  checked={task.completed}
-                  onCheckedChange={() => toggleTaskCompletion(task.id)}
-                  className="bg-gray-800 border-gray-700 text-white focus:border-blue-500 focus:ring-blue-500"
-                />
-                <label
-                  htmlFor={`task-${task.id}`}
-                  className={`ml-2 ${task.completed ? 'line-through text-gray-400' : 'text-white'}`}
-                >
-                  {task.description}
-                </label>
-              </div>
-              <Button variant="destructive" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => deleteTask(task.id)}>
-                <Trash className="w-4 h-4" />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-pink-100 to-white p-4">
+      <Card className="w-full max-w-md bg-white shadow-lg rounded-lg overflow-hidden">
+        <CardHeader className="bg-pink-500 text-white">
+          <CardTitle className="text-2xl font-bold">To-Do List</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Input
+                type="text"
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                placeholder="Add a new task"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 sm:text-sm"
+              />
+              <Button onClick={addTask} className="bg-pink-500 text-white hover:bg-pink-600">
+                Add Task
               </Button>
-            </li>
-          ))}
-        </ul>
-      </main>
+            </div>
+            <ul className="space-y-2">
+              {tasks.map(task => (
+                <li key={task.id} className={`flex items-center justify-between p-2 rounded-lg ${task.color}`}>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => toggleTaskCompletion(task.id)}
+                      className={`${
+                        task.completed ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-300 hover:bg-gray-400'
+                      }`}
+                    >
+                      {task.completed ? <Check className="h-4 w-4" /> : <span className="h-4 w-4"></span>}
+                    </Button>
+                    <p className={`${task.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>
+                      {task.text}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => deleteTask(task.id)}
+                    className="bg-red-500 text-white hover:bg-red-600"
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
