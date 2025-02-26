@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react'
 import { Button } from "/components/ui/button"
 import { Input } from "/components/ui/input"
 import { Checkbox } from "/components/ui/checkbox"
-import { Label } from "/components/ui/label"
 import { Trash } from "lucide-react"
 
-interface Task {
+type Task = {
   id: number
   description: string
   completed: boolean
@@ -13,7 +12,7 @@ interface Task {
 
 export default function TodoList() {
   const [tasks, setTasks] = useState<Task[]>([])
-  const [taskInput, setTaskInput] = useState('')
+  const [taskDescription, setTaskDescription] = useState('')
 
   useEffect(() => {
     const storedTasks = localStorage.getItem('tasks')
@@ -27,19 +26,21 @@ export default function TodoList() {
   }, [tasks])
 
   const addTask = () => {
-    if (taskInput.trim()) {
+    if (taskDescription.trim()) {
       const newTask: Task = {
         id: Date.now(),
-        description: taskInput,
+        description: taskDescription,
         completed: false,
       }
       setTasks([...tasks, newTask])
-      setTaskInput('')
+      setTaskDescription('')
     }
   }
 
   const toggleTaskCompletion = (id: number) => {
-    setTasks(tasks.map(task => (task.id === id ? { ...task, completed: !task.completed } : task)))
+    setTasks(tasks.map(task => 
+      task.id === id ? { ...task, completed: !task.completed } : task
+    ))
   }
 
   const deleteTask = (id: number) => {
@@ -47,46 +48,44 @@ export default function TodoList() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+    <div className="flex flex-col items-center min-h-screen bg-black p-4 text-white">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold">To-Do List</h1>
+        <h1 className="text-3xl font-bold text-blue-400">To-Do List</h1>
       </header>
-      <main className="w-full max-w-md">
-        <div className="mb-4">
+      <main className="w-full max-w-2xl">
+        <div className="flex items-center mb-4">
           <Input
-            type="text"
-            value={taskInput}
-            onChange={(e) => setTaskInput(e.target.value)}
+            className="w-full mr-2 bg-gray-800 border-gray-700 text-white focus:border-blue-500 focus:ring-blue-500"
             placeholder="Add a new task"
-            className="w-full mb-2"
+            value={taskDescription}
+            onChange={(e) => setTaskDescription(e.target.value)}
           />
-          <Button onClick={addTask} className="w-full">
-            Add Task
-          </Button>
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={addTask}>Add</Button>
         </div>
-        <div className="space-y-2">
+        <ul className="space-y-2">
           {tasks.map(task => (
-            <div key={task.id} className="flex items-center justify-between p-2 border rounded bg-gray-100">
+            <li key={task.id} className="flex items-center justify-between p-2 bg-gray-800 rounded shadow-md">
               <div className="flex items-center">
                 <Checkbox
                   id={`task-${task.id}`}
                   checked={task.completed}
                   onCheckedChange={() => toggleTaskCompletion(task.id)}
+                  className="bg-gray-800 border-gray-700 text-white focus:border-blue-500 focus:ring-blue-500"
                 />
-                <Label htmlFor={`task-${task.id}`} className={`ml-2 ${task.completed ? 'line-through' : ''}`}>
+                <label
+                  htmlFor={`task-${task.id}`}
+                  className={`ml-2 ${task.completed ? 'line-through text-gray-400' : 'text-white'}`}
+                >
                   {task.description}
-                </Label>
+                </label>
               </div>
-              <Button variant="destructive" onClick={() => deleteTask(task.id)}>
+              <Button variant="destructive" className="bg-red-600 hover:bg-red-700 text-white" onClick={() => deleteTask(task.id)}>
                 <Trash className="w-4 h-4" />
               </Button>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       </main>
-      <footer className="mt-8">
-        <p className="text-gray-500">You have {tasks.length} tasks.</p>
-      </footer>
     </div>
   )
 }
